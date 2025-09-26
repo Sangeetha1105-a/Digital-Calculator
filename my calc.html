@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .calculator {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 35px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            max-width: 400px;
+            width: 100%;
+            animation: slideIn 0.8s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .display {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 35px 25px;
+            margin-bottom: 25px;
+            text-align: right;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .previous-operand {
+            color: #64748b;
+            font-size: 18px;
+            margin-bottom: 8px;
+            min-height: 22px;
+            font-weight: 400;
+        }
+        
+        .current-operand {
+            color: #1e293b;
+            font-size: 42px;
+            font-weight: 300;
+            min-height: 50px;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+        
+        button {
+            border: none;
+            border-radius: 16px;
+            font-size: 22px;
+            font-weight: 500;
+            height: 75px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-number {
+            background: white;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn-number:hover {
+            background: #f8fafc;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-operator {
+            background: #3b82f6;
+            color: white;
+            border: 1px solid #3b82f6;
+        }
+        
+        .btn-operator:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-operator.active {
+            background: #1d4ed8;
+            transform: scale(1.02);
+        }
+        
+        .btn-function {
+            background: #64748b;
+            color: white;
+            border: 1px solid #64748b;
+        }
+        
+        .btn-function:hover {
+            background: #475569;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+        }
+        
+        .btn-zero {
+            grid-column: span 2;
+        }
+        
+        .btn-equals {
+            background: #10b981;
+            color: white;
+            border: 1px solid #10b981;
+        }
+        
+        .btn-equals:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        @media (max-width: 480px) {
+            .calculator {
+                padding: 25px;
+                border-radius: 25px;
+            }
+            
+            button {
+                height: 65px;
+                font-size: 20px;
+                border-radius: 15px;
+            }
+            
+            .current-operand {
+                font-size: 36px;
+            }
+            
+            .previous-operand {
+                font-size: 16px;
+            }
+            
+            .buttons {
+                gap: 15px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            button {
+                height: 60px;
+                font-size: 18px;
+            }
+            
+            .buttons {
+                gap: 12px;
+            }
+        }
+        
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.3);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="previous-operand" id="previous-operand"></div>
+            <div class="current-operand" id="current-operand">0</div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn-function" onclick="clearAll()">AC</button>
+            <button class="btn-function" onclick="backspace()">⌫</button>
+            <button class="btn-function" onclick="percentage()">%</button>
+            <button class="btn-operator" onclick="chooseOperation('÷')">÷</button>
+            
+            <button class="btn-number" onclick="appendNumber('7')">7</button>
+            <button class="btn-number" onclick="appendNumber('8')">8</button>
+            <button class="btn-number" onclick="appendNumber('9')">9</button>
+            <button class="btn-operator" onclick="chooseOperation('×')">×</button>
+            
+            <button class="btn-number" onclick="appendNumber('4')">4</button>
+            <button class="btn-number" onclick="appendNumber('5')">5</button>
+            <button class="btn-number" onclick="appendNumber('6')">6</button>
+            <button class="btn-operator" onclick="chooseOperation('-')">-</button>
+            
+            <button class="btn-number" onclick="appendNumber('1')">1</button>
+            <button class="btn-number" onclick="appendNumber('2')">2</button>
+            <button class="btn-number" onclick="appendNumber('3')">3</button>
+            <button class="btn-operator" onclick="chooseOperation('+')">+</button>
+            
+            <button class="btn-function" onclick="toggleSign()">±</button>
+            <button class="btn-number" onclick="appendNumber('0')">0</button>
+            <button class="btn-number" onclick="appendNumber('.')">.</button>
+            <button class="btn-equals" onclick="compute()">=</button>
+        </div>
+    </div>
+
+    <script>
+        // Modern JavaScript with let/const, arrow functions, try-catch, and event listeners
+        let currentOperand = '0';
+        let previousOperand = '';
+        let operation = null;
+        let shouldResetDisplay = false;
+
+        const currentOperandElement = document.getElementById('current-operand');
+        const previousOperandElement = document.getElementById('previous-operand');
+
+        // Arrow function for updating display with error handling
+        const updateDisplay = () => {
+            try {
+                currentOperandElement.textContent = formatNumber(currentOperand);
+                if (operation !== null) {
+                    previousOperandElement.textContent = `${formatNumber(previousOperand)} ${operation}`;
+                } else {
+                    previousOperandElement.textContent = '';
+                }
+            } catch (error) {
+                console.error('Display update error:', error);
+                currentOperandElement.textContent = 'Error';
+            }
+        };
+
+        // Arrow function for number formatting with error handling
+        const formatNumber = (number) => {
+            try {
+                if (number === '') return '';
+                const num = parseFloat(number);
+                if (isNaN(num)) return number;
+                
+                // Format large numbers with commas
+                if (Math.abs(num) >= 1000) {
+                    return num.toLocaleString();
+                }
+                
+                return number;
+            } catch (error) {
+                console.error('Number formatting error:', error);
+                return number;
+            }
+        };
+
+        // Arrow function for appending numbers
+        const appendNumber = (number) => {
+            try {
+                if (number === '.' && currentOperand.includes('.')) return;
+                
+                if (shouldResetDisplay) {
+                    currentOperand = '0';
+                    shouldResetDisplay = false;
+                }
+                
+                if (currentOperand === '0' && number !== '.') {
+                    currentOperand = number;
+                } else {
+                    currentOperand += number;
+                }
+                
+                updateDisplay();
+            } catch (error) {
+                console.error('Append number error:', error);
+                handleError();
+            }
+        };
+
+        // Arrow function for choosing operations
+        const chooseOperation = (nextOperation) => {
+            try {
+                if (currentOperand === '') return;
+                
+                if (previousOperand !== '' && operation !== null && !shouldResetDisplay) {
+                    compute();
+                }
+                
+                operation = nextOperation;
+                previousOperand = currentOperand;
+                shouldResetDisplay = true;
+                
+                // Visual feedback for active operator
+                document.querySelectorAll('.btn-operator').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Find and activate the clicked operator button
+                const operatorButtons = document.querySelectorAll('.btn-operator');
+                operatorButtons.forEach(btn => {
+                    if (btn.textContent === nextOperation) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                updateDisplay();
+            } catch (error) {
+                console.error('Operation selection error:', error);
+                handleError();
+            }
+        };
+
+        // Arrow function for computation with enhanced error handling
+        const compute = () => {
+            try {
+                let computation;
+                const prev = parseFloat(previousOperand.replace(/,/g, ''));
+                const current = parseFloat(currentOperand.replace(/,/g, ''));
+                
+                if (isNaN(prev) || isNaN(current)) return;
+                
+                switch (operation) {
+                    case '+':
+                        computation = prev + current;
+                        break;
+                    case '-':
+                        computation = prev - current;
+                        break;
+                    case '×':
+                        computation = prev * current;
+                        break;
+                    case '÷':
+                        if (current === 0) {
+                            throw new Error('Division by zero');
+                        }
+                        computation = prev / current;
+                        break;
+                    default:
+                        return;
+                }
+                
+                // Check for overflow or invalid results
+                if (!isFinite(computation)) {
+                    throw new Error('Invalid computation result');
+                }
+                
+                // Round to avoid floating point errors
+                computation = Math.round((computation + Number.EPSILON) * 100000000) / 100000000;
+                
+                currentOperand = computation.toString();
+                operation = null;
+                previousOperand = '';
+                shouldResetDisplay = true;
+                
+                // Remove active state from operators
+                document.querySelectorAll('.btn-operator').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                updateDisplay();
+            } catch (error) {
+                console.error('Computation error:', error);
+                handleError();
+            }
+        };
+
+        // Arrow function for clearing all
+        const clearAll = () => {
+            try {
+                currentOperand = '0';
+                previousOperand = '';
+                operation = null;
+                shouldResetDisplay = false;
+                
+                document.querySelectorAll('.btn-operator').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                updateDisplay();
+            } catch (error) {
+                console.error('Clear all error:', error);
+                // Force reset even if error occurs
+                currentOperand = '0';
+                previousOperand = '';
+                operation = null;
+                shouldResetDisplay = false;
+                updateDisplay();
+            }
+        };
+
+        // Arrow function for toggling sign
+        const toggleSign = () => {
+            try {
+                if (currentOperand === '0' || currentOperand === 'Error') return;
+                const num = parseFloat(currentOperand.replace(/,/g, ''));
+                if (isNaN(num)) return;
+                currentOperand = (-num).toString();
+                updateDisplay();
+            } catch (error) {
+                console.error('Toggle sign error:', error);
+                handleError();
+            }
+        };
+
+        // Arrow function for percentage
+        const percentage = () => {
+            try {
+                if (currentOperand === 'Error') return;
+                const num = parseFloat(currentOperand.replace(/,/g, ''));
+                if (isNaN(num)) return;
+                currentOperand = (num / 100).toString();
+                updateDisplay();
+            } catch (error) {
+                console.error('Percentage error:', error);
+                handleError();
+            }
+        };
+
+        // Arrow function for backspace
+        const backspace = () => {
+            try {
+                if (currentOperand === 'Error') {
+                    clearAll();
+                    return;
+                }
+                
+                if (currentOperand.length > 1) {
+                    currentOperand = currentOperand.slice(0, -1);
+                } else {
+                    currentOperand = '0';
+                }
+                updateDisplay();
+            } catch (error) {
+                console.error('Backspace error:', error);
+                handleError();
+            }
+        };
+
+        // Arrow function for error handling
+        const handleError = () => {
+            currentOperand = 'Error';
+            operation = null;
+            previousOperand = '';
+            shouldResetDisplay = true;
+            updateDisplay();
+        };
+
+        // Arrow function for ripple effect with error handling
+        const createRipple = (event) => {
+            try {
+                const button = event.currentTarget;
+                const circle = document.createElement('span');
+                const diameter = Math.max(button.clientWidth, button.clientHeight);
+                const radius = diameter / 2;
+
+                circle.style.width = circle.style.height = `${diameter}px`;
+                circle.style.left = `${event.clientX - button.offsetLeft - radius}px`;
+                circle.style.top = `${event.clientY - button.offsetTop - radius}px`;
+                circle.classList.add('ripple');
+
+                const existingRipple = button.getElementsByClassName('ripple')[0];
+                if (existingRipple) {
+                    existingRipple.remove();
+                }
+
+                button.appendChild(circle);
+            } catch (error) {
+                console.error('Ripple effect error:', error);
+                // Ripple effect failure shouldn't break calculator functionality
+            }
+        };
+
+        // Enhanced keyboard handler with arrow function and better error handling
+        const handleKeydown = (event) => {
+            try {
+                const key = event.key;
+                
+                if ((key >= '0' && key <= '9') || key === '.') {
+                    appendNumber(key);
+                } else if (key === '+' || key === '-') {
+                    chooseOperation(key);
+                } else if (key === '*') {
+                    chooseOperation('×');
+                } else if (key === '/') {
+                    event.preventDefault();
+                    chooseOperation('÷');
+                } else if (key === 'Enter' || key === '=') {
+                    compute();
+                } else if (key === 'Escape' || key === 'c' || key === 'C') {
+                    clearAll();
+                } else if (key === 'Backspace') {
+                    backspace();
+                }
+            } catch (error) {
+                console.error('Keyboard handler error:', error);
+                handleError();
+            }
+        };
+nb
+        // Initialize calculator with proper event listeners
+        const initializeCalculator = () => {
+            try {
+                // Add ripple effect to all buttons using modern event listeners
+                const buttons = document.querySelectorAll('button');
+                buttons.forEach(button => {
+                    button.addEventListener('click', createRipple);
+                });
+
+                // Add keyboard support with modern event listener
+                document.addEventListener('keydown', handleKeydown);
+
+                // Initialize display
+                updateDisplay();
+
+                console.log('Calculator initialized successfully with modern JavaScript features');
+            } catch (error) {
+                console.error('Calculator initialization error:', error);
+                // Ensure basic functionality even if initialization partially fails
+                updateDisplay();
+            }
+        };
+
+        // Initialize when DOM is loaded
+        if  (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeCalculator);
+        } else {
+            initializeCalculator();
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9800fe8015a0d80f',t:'MTc1ODAzMjMxOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
